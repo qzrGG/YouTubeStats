@@ -8,27 +8,24 @@ const Summary: React.FC = () => {
 
   const data = from(context.listeningHistory);
 
-  const totalListeningTime = Math.round(data.sum(x => x.msPlayed) / 60000);
   const totalPlayCount = data.count();
 
-  const differentTracks = data.select(x => x.artistName + x.trackName).distinct().count();
-  const differentArtists = data.select(x => x.artistName).distinct().count();
+  const differentTracks = data.select(x => x.channelName + x.title).distinct().count();
+  const differentArtists = data.select(x => x.channelName).distinct().count();
 
-  const top10TracksPlayCount = data.groupBy(x => x.trackName + x.artistName)
+  const top10TracksPlayCount = data.groupBy(x => x.title + x.channelName)
     .select(x => x.count())
     .orderByDescending(x => x, Comparer)
     .take(Math.round(differentTracks / 10))
     .sum();
 
-  const top10ArtistsPlayCount = data.groupBy(x => x.artistName)
+  const top10ArtistsPlayCount = data.groupBy(x => x.channelName)
     .select(x => x.count())
     .orderByDescending(x => x)
     .take(Math.round(differentArtists / 10))
     .sum();
 
   const summary = {
-    totalListeningTimeMinutes: totalListeningTime,
-    totalListeningTimeSummary: `${Math.floor(totalListeningTime / 1440)} days, ${Math.floor(totalListeningTime / 60 % 24)} hours and ${Math.floor(totalListeningTime % 60)} minutes`,
     totalPlayCount: totalPlayCount,
     differentTracks: differentTracks,
     differentArtists: differentArtists,
@@ -42,9 +39,7 @@ const Summary: React.FC = () => {
 
       <p className="text-center" style={{fontSize: "large"}}>
         Since {context.since.toLocaleDateString()} to {context.to.toLocaleDateString()} you've listened to <br />
-        <span className="display-4">{summary.totalPlayCount} tracks</span>  <br />
-        for a total of <br /><span className="display-4">{summary.totalListeningTimeMinutes} minutes</span>  <br />
-        or <span className="display-4"> {summary.totalListeningTimeSummary}</span>.
+        <span className="display-4">{summary.totalPlayCount} tracks</span>.
       </p>
     </React.Fragment >
   );

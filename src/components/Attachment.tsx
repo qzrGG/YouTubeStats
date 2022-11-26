@@ -12,10 +12,10 @@ const Attachment: React.FC = () => {
 
   const totalPlayCount = data.count();
 
-  const differentTracks = data.select(x => x.artistName + x.trackName).distinct().count();
-  const differentArtists = data.select(x => x.artistName).distinct().count();
+  const differentTracks = data.select(x => x.channelName + x.title).distinct().count();
+  const differentArtists = data.select(x => x.channelName).distinct().count();
 
-  const topTracksPlayCount = data.groupBy(x => x.trackName + x.artistName)
+  const topTracksPlayCount = data.groupBy(x => x.title + x.channelName)
     .select(x => x.count())
     .orderByDescending(x => x, Comparer)
     .aggregate({ result: Array.from([0]), i: 0 }, (x, y) => {
@@ -27,7 +27,7 @@ const Attachment: React.FC = () => {
       return x;
     }).result;
 
-  let topArtistsPlayCount = data.groupBy(x => x.artistName)
+  let topArtistsPlayCount = data.groupBy(x => x.channelName)
     .select(x => x.count())
     .orderByDescending(x => x, Comparer)
     .aggregate({ result: Array.from([0]), i: 0 }, (x, y) => {

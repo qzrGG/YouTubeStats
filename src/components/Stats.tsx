@@ -5,10 +5,11 @@ import Chart from './Chart';
 import Summary from './Summary';
 import "./Stats.css";
 import OtherUnits from './OtherUnits';
-import Attachment from './Attachment';
+//import Attachment from './Attachment';
 import { from } from 'linq-to-typescript';
 import { ListeningEntry } from '../models/listeningEntry';
 import { StatsData, StatsProvider } from './StatsContext';
+import { WatchEntry } from '../models/WatchEntry';
 
 interface StatsProps {
 }
@@ -31,12 +32,14 @@ const Stats: React.FC<StatsProps> = (props) => {
     if (state.files.length === 0) return;
 
     Promise.all(state.files.map(loadFile)).then(results => {
-      let entries = results.map(r => JSON.parse(r as string) as ListeningEntry[]).flat();
-      entries.forEach(x => x.date = new Date(x.endTime.replace(" ", "T") + ":00.000Z"));
-      let ordered = from(entries).orderBy(x => x.date.getTime()).groupBy(x => x.endTime + x.trackName).select(x => x.first());
-      entries = ordered.toArray();
+      const entries = results.map(r => JSON.parse(r as string) as WatchEntry[]).flat();
 
-      setState(s => ({ ...s, progress: 2, data: { listeningHistory: entries, since: ordered.first().date, to: ordered.last().date } }));
+      //entries.forEach(x => x.date = new Date(x.endTime.replace(" ", "T") + ":00.000Z"));
+      entries.forEach(x => x.title =x.title.replace('Obejrzano: ', ''));
+      const ordered = from(entries).where(x => x.subtitles && x.subtitles.length > 0).orderBy(x => x.time).groupBy(x => x.time + x.title).select(x => x.first());
+      const listeningEntries = ordered.select(e => ({title: e.title || 'UNKNOWN', channelName: e.subtitles?.length > 0 ? e.subtitles[0].name : 'UNKNOWN', time: new Date(e.time)} )); 
+
+      setState(s => ({ ...s, progress: 2, data: { listeningHistory: listeningEntries.toArray(), since: listeningEntries.first().time, to: listeningEntries.last().time } }));
       let summary = document.getElementById('summary');
       if (summary)
         summary!.scrollIntoView()
@@ -44,8 +47,7 @@ const Stats: React.FC<StatsProps> = (props) => {
   }, [state.files]);
 
   const loadFiles = (files: File[]) => {
-    const filesToLoad = files.filter(x => x.name.startsWith("StreamingHistory"));
-    setState({ ...state, progress: 1, files: filesToLoad });
+    setState({ ...state, progress: 1, files: files });
   }
 
   const loadFile = (file: File) => new Promise((resolve, reject) => {
@@ -80,17 +82,11 @@ const Stats: React.FC<StatsProps> = (props) => {
             <section id="summary">
               <Summary />
             </section>
-            <section id="otherUnits">
-              <OtherUnits />
-            </section>
             <section id="chart">
               <Chart description="Music over time" />
             </section>
             <section id="table">
               <Table />
-            </section>
-            <section id="attachment">
-              <Attachment />
             </section>
           </StatsProvider>
         </React.Fragment>

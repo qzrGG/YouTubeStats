@@ -44,9 +44,9 @@ const Table: React.FC<TabProps> = (props) => {
   const groupByProperty = (type: TableType): ((x: ListeningEntry) => string) => {
     switch (type) {
       case TableType.trackAndArtist:
-        return x => `${x.trackName}|${x.artistName}`;
+        return x => `${x.title}|${x.channelName}`;
       case TableType.artistOnly:
-        return x => x.artistName;
+        return x => x.channelName;
     }
   }
 
@@ -55,29 +55,26 @@ const Table: React.FC<TabProps> = (props) => {
   useEffect(() => {
     let result = from(context.listeningHistory)
       .groupBy(groupByProperty(state.tableType))
-      .select(x => ({ x, count: x.count(), sum: x.sum(t => t.msPlayed) }))
+      .select(x => ({ x, count: x.count() }))
       .orderByDescending(x => x.count, Comparer)
-      .thenByDescending(x => x.sum)
-      .select(({ x, count, sum }, i) => {
+      .select(({ x, count }, i) => {
         return {
           id: i + 1,
-          trackName: x.first().trackName,
-          artistName: x.first().artistName,
+          title: x.first().title,
+          channelName: x.first().channelName,
           playedTimes: count,
-          totalListeningTime: round(sum / 60000, 2),
           entries: x.toArray()
         }
       })
-      .where(x => x.artistName.toLowerCase().indexOf(state.searchPhrase) > -1
-        || (state.tableType === TableType.trackAndArtist && x.trackName.toLowerCase().indexOf(state.searchPhrase) > -1)
+      .where(x => x.channelName.toLowerCase().indexOf(state.searchPhrase) > -1
+        || (state.tableType === TableType.trackAndArtist && x.title.toLowerCase().indexOf(state.searchPhrase) > -1)
       );
 
     switch (state.orderByColumn) {
       case 0: result = result.orderBy(x => x.id, Comparer); break;
-      case 1: result = result.orderBy(x => x.trackName); break;
-      case 2: result = result.orderBy(x => x.artistName); break;
+      case 1: result = result.orderBy(x => x.title); break;
+      case 2: result = result.orderBy(x => x.channelName); break;
       case 3: result = result.orderBy(x => x.id, Comparer); break;
-      case 4: result = result.orderBy(x => x.totalListeningTime, Comparer); break;
     }
 
     if (state.descendingOrder)
@@ -96,7 +93,7 @@ const Table: React.FC<TabProps> = (props) => {
   const typeChanged = (type: TableType) => setState({ ...state, tableType: type, orderByColumn: 0, descendingOrder: false });
 
   const onRowSelected = (row: StatRow) => {
-    const description = state.tableType === TableType.artistOnly ? row.artistName : `${row.trackName} by ${row.artistName}`;
+    const description = state.tableType === TableType.artistOnly ? row.channelName : `${row.title} by ${row.channelName}`;
     setState({ ...state, listeningHistorySubset: row.entries, subsetDescription: description });
   }
 
@@ -110,25 +107,23 @@ const Table: React.FC<TabProps> = (props) => {
     style: { flex: 1 }
   }, {
     header: "Track",
-    selector: (x: StatRow) => x.trackName,
+    selector: (x: StatRow) => x.title,
     style: { flex: 10, display: state.tableType === TableType.trackAndArtist ? "table-cell " : "none" },
   }, {
     header: "Artist",
-    selector: (x: StatRow) => x.artistName,
+    selector: (x: StatRow) => x.channelName,
     style: { flex: 10 }
   }, {
     header: "Streams",
     selector: (x: StatRow) => x.playedTimes,
     style: { flex: 2 }
-  }, {
-    header: "Time",
-    selector: (x: StatRow) => minutes(x.totalListeningTime),
-    style: { flex: 3 }
-  }, {
-    header: "Earnings ($)",
-    selector: (x: StatRow) => round(x.playedTimes * 0.004, 2),
-    style: { flex: 2, display: state.tableType === TableType.artistOnly ? "table-cell " : "none" }
-  }];
+  }
+    // , {
+    //   header: "Earnings ($)",
+    //   selector: (x: StatRow) => round(x.playedTimes * 0.004, 2),
+    //   style: { flex: 2, display: state.tableType === TableType.artistOnly ? "table-cell " : "none" }
+    // }
+  ];
 
   return (
     <React.Fragment>

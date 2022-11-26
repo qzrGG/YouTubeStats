@@ -58,18 +58,19 @@ const Chart: React.FC<ChartProps> = (props) => {
 
 
   const chartData = from(props.subset !== undefined ? props.subset : context.listeningHistory)
-    .groupBy(x => chartFuncs[state.chartFuncId](x.date))
+    .groupBy(x => chartFuncs[state.chartFuncId](x.time))
     .select(g => ({
       name: g.key,
-      totalTime: round(g.sum(x => x.msPlayed) / 60000, 2),
       totalPlaybacks: g.count(),
-      mostPlayedTrack: g.groupBy(x => x.trackName).orderByDescending(x => x.count(), Comparer).first().take(1).select(x => `${x.trackName} by ${x.artistName}`).first(),
-      mostPlayedArtist: g.groupBy(x => x.artistName).orderByDescending(x => x.count(), Comparer).first().key
+      mostPlayedTrack: g.groupBy(x => x.title).select(x => ({data: x, count: x.count()})).orderByDescending(x => x.count, Comparer).select(x => `${x.data.first().title} by ${x.data.first().channelName} (${x.count})`).first(),
+      mostPlayedArtist: g.groupBy(x => x.channelName).select(x => ({data: x, count: x.count()})).orderByDescending(x => x.count, Comparer).select(x => `${x.data.first().channelName} (${x.count})`).first()
     }))
     .union(emptyData[state.chartFuncId])
     .groupBy(x => x.name)
     .select(x => x.first())
     .toArray();
+
+  console.log(chartData)
 
   if (props.subset !== undefined && props.subset.length === 0) {
     return (<p>Select a track or an artist in the table to see it's details</p>);
@@ -92,18 +93,18 @@ const Chart: React.FC<ChartProps> = (props) => {
           <XAxis dataKey={xAxisFuncs[state.chartFuncId]} />
           <YAxis />
           <Tooltip content={CustomTooltip} />
-          <Line type="monotone" dataKey="totalTime" stroke="#00d76f" strokeWidth={5} />
+          <Line type="monotone" dataKey="totalPlaybacks" stroke="#00d76f" strokeWidth={5} />
         </LineChart>
       </ResponsiveContainer>
     </React.Fragment >);
 }
 
 const CustomTooltip = ({ active, payload, label }: any) => {
-  if (active && payload && payload[0].payload.totalTime > 0) {
+  if (active && payload && payload[0].payload?.totalPlaybacks > 0) {
     return (
       <div className="custom-tooltip">
-        <p className="label">{`Total listening time: ${minutes(payload[0].payload.totalTime)}`}</p>
-        <p className="desc">Total tracks played: {payload[0].payload.totalPlaybacks}<br />
+        <p className="label">Total tracks played: {payload[0].payload.totalPlaybacks}</p>
+        <p className="desc">
           Favourite track: {payload[0].payload.mostPlayedTrack}<br />
           Favourite artist: {payload[0].payload.mostPlayedArtist}<br />
         </p>

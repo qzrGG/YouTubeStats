@@ -2,10 +2,9 @@ import { CSSProperties } from "react";
 import { ListeningEntry } from "./listeningEntry";
 
 export interface StatRow {
-    trackName: string;
-    artistName: string;
+    title: string;
+    channelName: string;
     playedTimes: number;
-    totalListeningTime: number;
     id: number;
     entries: ListeningEntry[];
 }
