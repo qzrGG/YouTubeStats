@@ -3,7 +3,6 @@ import React, { useState, useEffect, useContext } from "react";
 import { ButtonGroup, Button } from "reactstrap";
 import "./Table.css";
 import Comparer from "../models/Comparer";
-import { minutes, round } from "../common/math.helper";
 import { StatRow } from "../models/StatRow";
 import Ranking from "./Ranking";
 import { ListeningEntry } from "../models/listeningEntry";
@@ -44,9 +43,9 @@ const Table: React.FC<TabProps> = (props) => {
   const groupByProperty = (type: TableType): ((x: ListeningEntry) => string) => {
     switch (type) {
       case TableType.trackAndArtist:
-        return x => `${x.title}|${x.channelName}`;
+        return x => x.titleUrl;
       case TableType.artistOnly:
-        return x => x.channelName;
+        return x => x.channelUrl;
     }
   }
 
@@ -59,9 +58,8 @@ const Table: React.FC<TabProps> = (props) => {
       .orderByDescending(x => x.count, Comparer)
       .select(({ x, count }, i) => {
         return {
+          ...x.first(),
           id: i + 1,
-          title: x.first().title,
-          channelName: x.first().channelName,
           playedTimes: count,
           entries: x.toArray()
         }
@@ -106,15 +104,15 @@ const Table: React.FC<TabProps> = (props) => {
     selector: (x: StatRow) => x.id,
     style: { flex: 1 }
   }, {
-    header: "Track",
+    header: "Title",
     selector: (x: StatRow) => x.title,
     style: { flex: 10, display: state.tableType === TableType.trackAndArtist ? "table-cell " : "none" },
   }, {
-    header: "Artist",
+    header: "Channel",
     selector: (x: StatRow) => x.channelName,
     style: { flex: 10 }
   }, {
-    header: "Streams",
+    header: "Views",
     selector: (x: StatRow) => x.playedTimes,
     style: { flex: 2 }
   }
@@ -129,7 +127,7 @@ const Table: React.FC<TabProps> = (props) => {
     <React.Fragment>
       <div className="d-flex align-items-center mb-2">
         <div style={{ flex: 1 }}>
-          <span className="section-header">Your favourites</span>
+          <span className="section-header">Most watched</span>
         </div>
         <div style={{ flex: 1 }}>
           <input type="text" className="form-control" placeholder="Search" style={{ borderRadius: 50 }}
@@ -140,8 +138,8 @@ const Table: React.FC<TabProps> = (props) => {
       </div>
 
       <ButtonGroup className="d-flex mb-3" size="md">
-        <Button active={state.tableType === TableType.trackAndArtist} color="primary" onClick={() => typeChanged(TableType.trackAndArtist)}>Favourite tracks</Button>
-        <Button active={state.tableType === TableType.artistOnly} color="primary" onClick={() => typeChanged(TableType.artistOnly)}>Favourite artists</Button>
+        <Button active={state.tableType === TableType.trackAndArtist} color="primary" onClick={() => typeChanged(TableType.trackAndArtist)}>Most watched videos</Button>
+        <Button active={state.tableType === TableType.artistOnly} color="primary" onClick={() => typeChanged(TableType.artistOnly)}>Most watched channels</Button>
       </ButtonGroup>
 
       <div className="data-header">

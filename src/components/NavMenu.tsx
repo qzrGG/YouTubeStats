@@ -18,7 +18,7 @@ export interface NavMenuState {
 export class NavMenu extends Component<NavMenuProps, NavMenuState> {
   static displayName = NavMenu.name;
 
-  constructor (props: Readonly<NavMenuProps>) {
+  constructor(props: Readonly<NavMenuProps>) {
     super(props);
 
     this.state = {
@@ -28,7 +28,9 @@ export class NavMenu extends Component<NavMenuProps, NavMenuState> {
   }
 
   componentDidMount() {
-    if (window.matchMedia && window.matchMedia('(prefers-color-scheme: dark)').matches) {
+    let sessionValue = localStorage.getItem('darkMode');
+    if (sessionValue === 'true'
+      || !sessionValue && window.matchMedia && window.matchMedia('(prefers-color-scheme: dark)').matches) {
       this.toggleDarkMode(true);
     }
   }
@@ -40,7 +42,8 @@ export class NavMenu extends Component<NavMenuProps, NavMenuState> {
   }
 
   toggleDarkMode = (checked: boolean) => {
-    this.setState({ isDarkModeEnabled: checked}, () => {
+    localStorage.setItem('darkMode', checked ? 'true' : 'false');
+    this.setState({ isDarkModeEnabled: checked }, () => {
       const element = document.body;
       if (checked) {
         element.classList.add("dark-mode");
@@ -51,18 +54,18 @@ export class NavMenu extends Component<NavMenuProps, NavMenuState> {
     });
   }
 
-  render () {
+  render() {
     return (
       <header>
         <Navbar className="navbar-expand-sm navbar-toggleable-sm ng-white border-bottom box-shadow mb-3" light>
           <Container>
-            <NavbarBrand tag={Link} to="/"><img src='./logo192.png' height="40px" alt="Logo" /> Your Spotify Stats</NavbarBrand>
+            <NavbarBrand tag={Link} to="/"><img src='./logo192.png' height="40px" alt="Logo" /> Your YT Stats</NavbarBrand>
             <NavbarToggler onClick={this.toggleNavbar} className="mr-2" />
             <Collapse className="d-sm-inline-flex flex-sm-row-reverse" isOpen={!this.state.collapsed} navbar>
               <ul className="navbar-nav flex-grow">
-                <NavItem style={{marginTop: 8}}>
-                  <Switch checked={this.state.isDarkModeEnabled} onChange={this.toggleDarkMode} height={26} 
-                  checkedIcon={<FontAwesomeIcon icon={faMoon} style={{marginLeft: 5}}/>} onColor="#33c17d" uncheckedIcon={<FontAwesomeIcon icon={faSun} style={{marginLeft: 10}}/>}/>
+                <NavItem style={{ marginTop: 8 }}>
+                  <Switch checked={this.state.isDarkModeEnabled} onChange={this.toggleDarkMode} height={26}
+                    checkedIcon={<FontAwesomeIcon icon={faMoon} style={{ marginLeft: 5 }} />} onColor="#cc4b4c" uncheckedIcon={<FontAwesomeIcon icon={faSun} style={{ marginLeft: 10 }} />} />
                 </NavItem>
                 <NavItem>
                   <NavLink tag={Link} className="text-dark" to="/">Instructions</NavLink>

@@ -4,7 +4,6 @@ import { ButtonGroup, Button } from "reactstrap";
 import { LineChart, CartesianGrid, XAxis, YAxis, Line, Tooltip, ResponsiveContainer } from "recharts";
 import { from, range } from "linq-to-typescript";
 import Comparer from "../models/Comparer";
-import { minutes, round } from "../common/math.helper";
 import StatsContext from "./StatsContext";
 import { ListeningEntry } from "../models/listeningEntry";
 
@@ -62,19 +61,33 @@ const Chart: React.FC<ChartProps> = (props) => {
     .select(g => ({
       name: g.key,
       totalPlaybacks: g.count(),
-      mostPlayedTrack: g.groupBy(x => x.title).select(x => ({data: x, count: x.count()})).orderByDescending(x => x.count, Comparer).select(x => `${x.data.first().title} by ${x.data.first().channelName} (${x.count})`).first(),
-      mostPlayedArtist: g.groupBy(x => x.channelName).select(x => ({data: x, count: x.count()})).orderByDescending(x => x.count, Comparer).select(x => `${x.data.first().channelName} (${x.count})`).first()
+      mostPlayedTrack: g.groupBy(x => x.titleUrl).select(x => ({ data: x, count: x.count() })).orderByDescending(x => x.count, Comparer).select(x => `${x.data.first().title} by ${x.data.first().channelName} (${x.count})`).first(),
+      mostPlayedArtist: g.groupBy(x => x.channelUrl).select(x => ({ data: x, count: x.count() })).orderByDescending(x => x.count, Comparer).select(x => `${x.data.first().channelName} (${x.count})`).first()
     }))
     .union(emptyData[state.chartFuncId])
     .groupBy(x => x.name)
     .select(x => x.first())
     .toArray();
 
-  console.log(chartData)
-
   if (props.subset !== undefined && props.subset.length === 0) {
     return (<p>Select a track or an artist in the table to see it's details</p>);
   }
+
+  const CustomTooltip = ({ active, payload, label }: any) => {
+    if (active && payload && payload[0].payload?.totalPlaybacks > 0) {
+      return (
+        <div className="custom-tooltip">
+          <p className="label">{label}</p>
+          <p className="desc">Total videos watched: {payload[0].payload.totalPlaybacks}<br />
+            Favourite video: {payload[0].payload.mostPlayedTrack}<br />
+            Favourite channel: {payload[0].payload.mostPlayedArtist}<br />
+          </p>
+        </div>
+      );
+    }
+
+    return null;
+  };
 
   return (
     <React.Fragment>
@@ -93,26 +106,10 @@ const Chart: React.FC<ChartProps> = (props) => {
           <XAxis dataKey={xAxisFuncs[state.chartFuncId]} />
           <YAxis />
           <Tooltip content={CustomTooltip} />
-          <Line type="monotone" dataKey="totalPlaybacks" stroke="#00d76f" strokeWidth={5} />
+          <Line type="monotone" dataKey="totalPlaybacks" stroke="#ff5d5f" strokeWidth={5} />
         </LineChart>
       </ResponsiveContainer>
     </React.Fragment >);
 }
-
-const CustomTooltip = ({ active, payload, label }: any) => {
-  if (active && payload && payload[0].payload?.totalPlaybacks > 0) {
-    return (
-      <div className="custom-tooltip">
-        <p className="label">Total tracks played: {payload[0].payload.totalPlaybacks}</p>
-        <p className="desc">
-          Favourite track: {payload[0].payload.mostPlayedTrack}<br />
-          Favourite artist: {payload[0].payload.mostPlayedArtist}<br />
-        </p>
-      </div>
-    );
-  }
-
-  return null;
-};
 
 export default Chart;

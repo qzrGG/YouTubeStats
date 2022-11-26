@@ -1,4 +1,5 @@
 import React, { useEffect, useState } from 'react';
+import JSZip from 'jszip';
 import Dropzone from 'react-dropzone';
 import Table from './Table';
 import Chart from './Chart';
@@ -17,6 +18,7 @@ interface StatsProps {
 interface StatsState {
   progress: number;
   files: File[];
+  jsonFiles: File[];
   data: StatsData;
 }
 
@@ -25,26 +27,63 @@ const Stats: React.FC<StatsProps> = (props) => {
   const [state, setState] = useState<StatsState>({
     progress: 0,
     files: [],
+    jsonFiles: [],
     data: { listeningHistory: [], since: new Date(), to: new Date() }
   });
 
   useEffect(() => {
     if (state.files.length === 0) return;
 
-    Promise.all(state.files.map(loadFile)).then(results => {
-      const entries = results.map(r => JSON.parse(r as string) as WatchEntry[]).flat();
+    if (state.files[0].name.endsWith('.zip')) {
+      const zip = new JSZip();
+      let jsonFiles: File[] = []
+      zip.loadAsync(state.files[0]).then(f => {
+        Promise.all(Object.keys(f.files).map(filename => {
+          if (!filename.endsWith('.json'))
+            return;
+          return f.files[filename].async('string').then(fileData => {
+            return new File([fileData], filename);
+          });
+        })).then(res => {
+          let jsonFiles: File[] = [];
+          res.forEach(r => {
 
-      //entries.forEach(x => x.date = new Date(x.endTime.replace(" ", "T") + ":00.000Z"));
-      entries.forEach(x => x.title =x.title.replace('Obejrzano: ', ''));
-      const ordered = from(entries).where(x => x.subtitles && x.subtitles.length > 0).orderBy(x => x.time).groupBy(x => x.time + x.title).select(x => x.first());
-      const listeningEntries = ordered.select(e => ({title: e.title || 'UNKNOWN', channelName: e.subtitles?.length > 0 ? e.subtitles[0].name : 'UNKNOWN', time: new Date(e.time)} )); 
-
-      setState(s => ({ ...s, progress: 2, data: { listeningHistory: listeningEntries.toArray(), since: listeningEntries.first().time, to: listeningEntries.last().time } }));
-      let summary = document.getElementById('summary');
-      if (summary)
-        summary!.scrollIntoView()
-    })
+            if (r instanceof File) {
+              jsonFiles.push(r);
+            }
+          });
+          setState(s => ({ ...s, jsonFiles: jsonFiles }));
+        });
+      });
+    }
+    else {
+      setState(s => ({ ...s, progress: 3 }))
+    }
   }, [state.files]);
+
+  useEffect(() => {
+    if (state.jsonFiles.length === 0) return;
+
+    Promise.all(state.jsonFiles.map(loadFile)).then(results => {
+      try {
+        const entries = results.map(r => JSON.parse(r as string) as WatchEntry[]).flat();
+        entries.forEach(x => x.title = x.title.substring(x.title.indexOf(' ')));
+        const ordered = from(entries).where(x => x.subtitles && x.subtitles.length > 0).orderBy(x => x.time).groupBy(x => x.time + x.title).select(x => x.first());
+        const listeningEntries = ordered.select(e => ({ title: e.title || 'UNKNOWN', channelName: e.subtitles?.length > 0 ? e.subtitles[0].name : 'UNKNOWN', time: new Date(e.time), titleUrl: e.titleUrl, channelUrl: e.subtitles?.length > 0 ? e.subtitles[0].url : 'UNKNOWN' }));
+
+        if (listeningEntries.count() === 0) {
+          setState(s => ({ ...s, progress: 3 }))
+        } else {
+          setState(s => ({ ...s, progress: 2, data: { listeningHistory: listeningEntries.toArray(), since: listeningEntries.first().time, to: listeningEntries.last().time } }));
+          let summary = document.getElementById('summary');
+          if (summary)
+            summary!.scrollIntoView()
+        }
+      } catch (e) {
+        setState(s => ({ ...s, progress: 3 }))
+      }
+    })
+  }, [state.jsonFiles]);
 
   const loadFiles = (files: File[]) => {
     setState({ ...state, progress: 1, files: files });
@@ -59,17 +98,18 @@ const Stats: React.FC<StatsProps> = (props) => {
     fileReader.readAsText(file);
   });
 
-  return state.progress === 0
+  return state.progress === 0 || state.progress === 3
     ? (
       <section>
         <Dropzone onDrop={loadFiles}>
           {({ getRootProps, getInputProps }) => (
             <div {...getRootProps({ className: 'dropzone' })}>
               <input {...getInputProps()} />
-              <p>Drag and drop your StreamingHistory#.json files here, or click to select files</p>
+              <p>Drag and drop your Google Takeout file here, or click to select file</p>
             </div>
           )}
         </Dropzone>
+        {state.progress === 3 && <p>Could not load your file. Make sure you've selected the correct Google Takeout file with JSON data inside</p>}
       </section>
     ) : state.progress === 1 ? (
       <section id="otherUnits">
@@ -83,7 +123,7 @@ const Stats: React.FC<StatsProps> = (props) => {
               <Summary />
             </section>
             <section id="chart">
-              <Chart description="Music over time" />
+              <Chart description="Videos watched over time" />
             </section>
             <section id="table">
               <Table />

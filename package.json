@@ -10,6 +10,7 @@
     "@kartikag01/react-custom-scrollbars": "^4.2.1",
     "bootstrap": "^4.4.1",
     "fs": "^0.0.1-security",
+    "jszip": "^3.10.1",
     "linq-to-typescript": "^9.0.0",
     "node-sass": "^6.0.1",
     "overlayscrollbars": "^1.13.1",
