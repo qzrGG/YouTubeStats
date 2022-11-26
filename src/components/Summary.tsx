@@ -37,9 +37,9 @@ const Summary: React.FC = () => {
     <React.Fragment>
       <span className="section-header mb-3">Summary</span>
 
-      <p className="text-center" style={{fontSize: "large"}}>
-        Since {context.since.toLocaleDateString()} to {context.to.toLocaleDateString()} you've listened to <br />
-        <span className="display-4">{summary.totalPlayCount} tracks</span>.
+      <p className="text-center" style={{ fontSize: "large" }}>
+        Since {context.since.toLocaleDateString()} to {context.to.toLocaleDateString()} you've watched <br />
+        <span className="display-4">{summary.totalPlayCount} videos</span> on YouTube.
       </p>
     </React.Fragment >
   );
