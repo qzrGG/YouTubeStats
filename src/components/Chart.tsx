@@ -19,6 +19,7 @@ interface ChartState {
 const Chart: React.FC<ChartProps> = (props) => {
   const [state, setState] = useState<ChartState>({ chartFuncId: 0 });
   const context = useContext(StatsContext);
+  const small = props.subset !== undefined;
 
   const chartFuncs: ((x: Date) => number)[] = [
     x => x.getHours(),
@@ -79,8 +80,8 @@ const Chart: React.FC<ChartProps> = (props) => {
         <div className="custom-tooltip">
           <p className="label">{label}</p>
           <p className="desc">Total videos watched: {payload[0].payload.totalPlaybacks}<br />
-            Favourite video: {payload[0].payload.mostPlayedTrack}<br />
-            Favourite channel: {payload[0].payload.mostPlayedArtist}<br />
+            Favorite video: {payload[0].payload.mostPlayedTrack}<br />
+            Favorite channel: {payload[0].payload.mostPlayedArtist}<br />
           </p>
         </div>
       );
@@ -91,9 +92,9 @@ const Chart: React.FC<ChartProps> = (props) => {
 
   return (
     <React.Fragment>
-      <span className="section-header mb-3">{props.description}</span>
+      <span className={small ? 'mb-2' : 'section-header mb-3'}>{props.description}</span>
 
-      <ButtonGroup className="d-flex mb-3" size="md">
+      <ButtonGroup className="d-flex mb-3" size={small ? "sm" : "md"}>
         <Button active={state.chartFuncId === 0} color="primary" onClick={() => setState({ chartFuncId: 0 })}>Hours</Button>
         <Button active={state.chartFuncId === 1} color="primary" onClick={() => setState({ chartFuncId: 1 })}>Days of week</Button>
         <Button active={state.chartFuncId === 2} color="primary" onClick={() => setState({ chartFuncId: 2 })}>Months</Button>

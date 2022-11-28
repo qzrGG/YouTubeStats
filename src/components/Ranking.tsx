@@ -4,6 +4,8 @@ import { FixedSizeList } from "react-window";
 import "./Table.css";
 import { StatColumn, StatRow } from "../models/StatRow";
 import Scrollbars from "react-custom-scrollbars-2";
+import { faPlayCircle } from "@fortawesome/free-solid-svg-icons";
+import { FontAwesomeIcon } from "@fortawesome/react-fontawesome";
 
 interface RankingProps {
   onSubsetChanged: (subset: StatRow) => void;
@@ -20,24 +22,47 @@ const Ranking: React.FC<RankingProps> = (props) => {
 
   const onRowSelected = (row: StatRow) => {
     props.onSubsetChanged(row);
-  }
+  };
 
   const Row = ({ index, style }: any) => (
-    <div className="d-flex stats-row" style={style} onClick={_ => onRowSelected(props.data[index])}>
+    <div
+      className="d-flex stats-row"
+      style={style}
+      onClick={(_) => onRowSelected(props.data[index])}
+    >
       {props.columns.map((x) => (
-        <div key={x.header} style={x.style} className="data-cell">{x.selector(props.data[index])}</div>
+        <div key={x.header} style={x.style} className="data-cell">
+          {x.isLink && (
+            <a
+              href={x.selector(props.data[index])}
+              target="_blank"
+              rel="noreferrer"
+            >
+              <FontAwesomeIcon icon={faPlayCircle} />
+            </a>
+          )}
+          {!x.isLink && x.selector(props.data[index])}
+        </div>
       ))}
     </div>
   );
 
-  const CustomScrollbars = ({ onScroll, forwardedRef, style, children }: any) => {
-    const refSetter = useCallback(scrollbarsRef => {
-      if (scrollbarsRef) {
-        forwardedRef(scrollbarsRef.view);
-      } else {
-        forwardedRef(null);
-      }
-    }, [forwardedRef]);
+  const CustomScrollbars = ({
+    onScroll,
+    forwardedRef,
+    style,
+    children,
+  }: any) => {
+    const refSetter = useCallback(
+      (scrollbarsRef) => {
+        if (scrollbarsRef) {
+          forwardedRef(scrollbarsRef.view);
+        } else {
+          forwardedRef(null);
+        }
+      },
+      [forwardedRef]
+    );
 
     return (
       <Scrollbars
@@ -68,10 +93,13 @@ const Ranking: React.FC<RankingProps> = (props) => {
       </FixedSizeList>
     </div>
   );
-}
+};
 
-const areEqual = (prevProps: RankingProps, nextProps: RankingProps): boolean => {
+const areEqual = (
+  prevProps: RankingProps,
+  nextProps: RankingProps
+): boolean => {
   return prevProps.data === nextProps.data;
- }
+};
 
 export default React.memo(Ranking, areEqual);
