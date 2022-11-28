@@ -2,7 +2,7 @@
   "name": "yt-stats",
   "version": "0.1.0",
   "private": true,
-  "homepage": "https://qzrgg.github.io/YTStats/",
+  "homepage": "https://qzrgg.github.io/YouTubeStats/",
   "dependencies": {
     "@fortawesome/fontawesome-svg-core": "^1.2.36",
     "@fortawesome/free-solid-svg-icons": "^5.15.4",
